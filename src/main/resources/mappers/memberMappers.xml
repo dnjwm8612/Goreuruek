@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.ram.goreureuk.mappers.memberMappers">
+  <select id="selectByEmail" resultType="com.ram.goreureuk.member.MemberVO" parameterType="String">
+        <![CDATA[
+          SELECT
+              MM_EMAIL,
+              MM_NAME
+          FROM
+              member
+          WHERE
+              MM_EMAIL = #{MM_EMAIL}       
+      ]]>
+    </select>
+    
+    <select id="selectById" resultType="com.ram.goreureuk.member.MemberVO" parameterType="String">
+        <![CDATA[
+          SELECT
+              MM_CODE,
+              MM_EMAIL,
+              MM_ID,
+              MM_NAME,
+              MM_PASSWORD,
+              MM_REGDATE,
+              MM_AUTH
+          FROM
+              member
+          WHERE
+              MM_ID = #{MM_ID}       
+      ]]>
+    </select>
+    
+    <select id="selectByName" resultType="com.ram.goreureuk.member.MemberVO" parameterType="String">
+        <![CDATA[
+          SELECT
+              MM_EMAIL,
+              MM_NAME
+          FROM
+              member
+          WHERE
+              MM_NAME = #{MM_NAME}       
+      ]]>
+    </select>
+    
+    <insert id="register" parameterType="com.ram.goreureuk.member.MemberVO">
+    	<selectKey keyProperty="MM_CODE" resultType="String" order="BEFORE">
+    	<![CDATA[select 'MM'||lpad(MM_CODE.nextval,3,0) from dual]]>
+  		</selectKey>
+        <![CDATA[
+            INSERT INTO member
+            (
+            	MM_CODE,
+                MM_EMAIL,
+                MM_ID,
+                MM_NAME,
+                MM_PASSWORD,
+                MM_REGDATE
+            )
+            VALUES
+            (	
+            	#{MM_CODE},
+                #{MM_EMAIL},
+                #{MM_ID},
+                #{MM_NAME},
+                #{MM_PASSWORD},
+                SYSDATE
+            )
+        ]]>
+    </insert>
+    
+    <select id="selectUserById" resultType="com.ram.goreureuk.member.CustomUserDetails" parameterType="String">
+        <![CDATA[
+            SELECT
+              	MM_CODE,
+                MM_EMAIL,
+                MM_ID,
+                MM_NAME,
+                MM_PASSWORD,
+                MM_REGDATE,
+                MM_AUTH,
+                MM_ENABLED
+            FROM
+                member
+            WHERE
+                MM_ID=#{MM_ID}
+        ]]>
+    </select>
+    
+    <select id="updateDisabled" parameterType="String">
+        <![CDATA[
+            UPDATE
+                member
+            SET
+                MM_ENABLED = 0
+            WHERE
+                MM_ID=#{MM_ID}
+        ]]>
+    </select>
+    
+    <update id="updateFailureCount" parameterType="String">
+        <![CDATA[
+            UPDATE
+                member
+            SET
+                MM_FAILURE_CNT = MM_FAILURE_CNT + 1
+            WHERE
+                MM_ID=#{MM_ID}
+        ]]>
+    </update>
+    
+    <select id="checkFailureCount" resultType="int" parameterType="String">
+        <![CDATA[
+            SELECT
+                MM_FAILURE_CNT
+            FROM
+                member
+            WHERE
+                MM_ID=#{MM_ID}
+        ]]>
+    </select>
+    
+    <update id="updateFailureCountReset" parameterType="String">
+	    <![CDATA[
+	        UPDATE
+	            member
+	        SET
+	            MM_FAILURE_CNT = 0
+	        WHERE
+	            MM_ID=#{MM_ID}
+	    ]]>
+	</update>
+	
+	<!-- 아이디 찾기 -->
+	<select id="findid" parameterType="String" resultType="String">
+		select MM_ID from member where MM_EMAIL = #{MM_EMAIL}
+	</select>
+	
+	  <!-- 비번 찾기 -->
+	<select id="findpw" parameterType="hashmap" resultType="com.ram.goreureuk.member.MemberVO">
+		select * from member where MM_EMAIL = #{MM_EMAIL} and MM_ID =#{MM_ID}
+	</select>
+	<!-- 비밀번호 변경 -->
+	<update id="updatepw" parameterType="hashmap">
+		update member set MM_PASSWORD = #{MM_PASSWORD} where MM_ID = #{MM_ID}
+	</update>
+	
+	<!-- 마이페이지 정보 -->
+  	<select id="mypageView" resultType="com.ram.goreureuk.member.MemberVO" parameterType="String">
+          SELECT
+              MM_CODE,
+              MM_EMAIL,
+              MM_ID,
+              MM_NAME,
+              MM_REGDATE
+          FROM
+              member
+          WHERE
+              MM_ID = #{MM_ID}       
+    </select>
+    
+    <insert id="inputGoogleInfo" parameterType="com.ram.goreureuk.member.GoogleInfoVO">
+  		<selectKey keyProperty="MM_CODE" resultType="String" order="BEFORE">
+    	<![CDATA[select 'MM'||lpad(MM_CODE.nextval,3,0) from dual]]>
+  		</selectKey>
+        <![CDATA[
+            INSERT INTO member
+            (
+            	MM_CODE,
+                MM_EMAIL,
+                MM_ID,
+                MM_NAME,
+                MM_PASSWORD,
+                MM_REGDATE
+            )
+            VALUES
+            (	
+            	#{MM_CODE},
+                #{emailAddress},
+                #{emailAddress},
+                #{displayName},
+                #{emailAddress},
+                SYSDATE
+            )
+        ]]>
+    </insert>
+    
+    <select id="comparewithDB" parameterType="com.ram.goreureuk.member.GoogleInfoVO" resultType = "com.ram.goreureuk.member.GoogleInfoVO">
+    	select MM_ID, MM_PASSWORD from member
+    	where MM_ID = #{emailAddress} and MM_PASSWORD = #{emailAddress}
+    </select>
+    
+    <select id="editView" resultType="com.ram.goreureuk.member.signUpVO" parameterType="String">
+          SELECT
+              MM_CODE,
+              MM_EMAIL,
+              MM_ID,
+              MM_NAME
+          FROM
+              member
+          WHERE
+              MM_ID = #{MM_ID}       
+    </select>
+    
+    <!-- 회원수정 -->
+    <update id="editMemberEmail" parameterType="com.ram.goreureuk.member.signUpVO">
+            UPDATE
+                member
+            SET
+                MM_EMAIL = #{MM_EMAIL}
+            WHERE
+                MM_CODE=#{MM_CODE}
+    </update>
+    
+    <!-- 회원수정 -->
+    <update id="editMemberName" parameterType="com.ram.goreureuk.member.signUpVO">
+            UPDATE
+                member
+            SET
+                MM_NAME = #{MM_NAME}
+            WHERE
+                MM_CODE=#{MM_CODE}
+    </update>
+    
+    <!-- 비밀번호 수정 -->
+    <update id="editPw" parameterType="com.ram.goreureuk.member.signUpVO">
+            UPDATE
+                member
+            SET
+                MM_PASSWORD = #{MM_PASSWORD}
+            WHERE
+                MM_CODE=#{MM_CODE}
+    </update>
+    
+    <!-- 회원탈퇴 -->
+    <delete id="DeleteUser" parameterType="String">
+		delete from
+		member where MM_ID = #{MM_ID}
+	</delete>
+	
+	<!-- 메시지조회 -->
+	<select id="mypageMessage" resultType="com.ram.goreureuk.freeboard.Message" parameterType="String">
+          SELECT
+              MS_CODE,
+              TARGET_MMID,
+              SENDER_MMID,
+              MS_CONTENT,
+              senddate
+          FROM
+              tbl_message
+          WHERE
+              TARGET_MMID = #{TARGET_MMID}       
+    </select>
+    
+    <!-- 문의내역 -->
+	<select id="Myqna" resultType="com.ram.goreureuk.mypage.MyqnaVO" parameterType="String">
+          SELECT
+              a.MS_CODE,
+              a.MS_CONTENT,
+              b.MSR_CONTENT,
+              b.MSR_DATE,
+              b.MSR_MSCODE
+          FROM message a
+          inner join messagereply b
+          on a.MS_CODE = b.MSR_MSCODE
+          WHERE
+              a.MS_MMID = #{MS_MMID}       
+    </select>
+    
+  	
+  </mapper>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ram.goreureuk.mappers.MessageMapper">
+
+	<!-- 메세지 리스트 -->
+	<select id="mslist" resultType="com.ram.goreureuk.message.MessageVO">
+		<include refid="pagingHeader"></include>
+		select ms_code, ms_mmcode, ms_mmid, ms_content, ms_date,
+		(select count(*) from msr where msr_mscode=m.ms_code) as recnt
+		from
+		message m
+		<!-- <include refid="search"></include> -->
+		order by
+		ms_date desc
+		<include refid="pagingFooter"></include>
+	</select>
+
+	<!-- 페이징 sql -->
+	<sql id="pagingHeader">
+		select * from (
+		select rownum as rn, A.* from(
+	</sql>
+	<sql id="pagingFooter">
+		) A
+		)where rn between #{start} and #{end}
+	</sql>
+	
+	<!-- 메세지 레코드 갯수 -->
+	<select id="ms_countArticle" resultType="int">
+		select count(*) from message
+		<!-- <include refid="search"></include> -->
+	</select>
+	
+	<!-- 메세지 조회 -->
+	<select id="ms_view" parameterType="String" resultType="com.ram.goreureuk.message.MessageVO">
+		select ms_mmcode, ms_mmid, ms_date, ms_content, ms_code
+		from
+		message
+		where
+		ms_code = #{ms_code}
+	</select>
+	
+	<!-- 메세지 작성 -->
+	<insert id="ms_insert">
+		insert into message
+		(ms_mmcode, ms_mmid, ms_content, ms_code)
+		values (#{ms_mmcode}, #{ms_mmid}, #{ms_content}, 's'||lpad(message_sequence.nextval,4,0))
+	</insert>
+	
+	<!-- 메세지 레코드 갯수 -->
+	<select id="code" resultType="String" parameterType="String">
+		select MM_CODE from member where MM_ID = #{MM_ID}
+	</select>
+</mapper>

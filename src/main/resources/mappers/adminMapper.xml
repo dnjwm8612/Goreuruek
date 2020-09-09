@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	<mapper namespace="com.ram.goreureuk.mappers.adminMapper">
+
+	<select id="reportView" resultType="com.ram.goreureuk.freeboard.BlackList">
+		select 
+			BL_REASON,
+			BL_DATE,
+			BL_MMID,
+			BL_REPORTER
+		from blacklist 	
+	</select>
+	
+	<update id="adminReportReuslt" parameterType="String">
+		update member set
+			MM_ENABLED = 0
+		where
+			MM_ID = #{MM_ID}		
+	</update>
+	
+	<select id="adminUser" resultType="com.ram.goreureuk.member.MemberVO">
+		select 
+			MM_CODE,
+			MM_ID,
+			MM_NAME,
+			MM_EMAIL,
+			MM_AUTH,
+			MM_REGDATE,
+			MM_ENABLED
+		from member	
+	</select>
+	
+	<delete id="adminDelUser" parameterType="String">
+		delete from member where MM_CODE = #{MM_CODE}
+	</delete>
+	
+	<select id="freeBoardView" resultType="com.ram.goreureuk.freeboard.FreeBoardVO">
+		select
+		g.FB_CODE,
+		g.FB_MMID,
+		g.FB_DATE,
+		g.FB_LIKES,
+		c.FBC_FBCODE,
+		c.FBC_CONTENT,
+		c.FBC_CONTENT2,
+		c.FBC_TAG
+		from freeboard g
+		inner join freeboardcontent c
+		on g.FB_MMID =
+		c.FBC_FBMMID
+		where g.FB_CODE= c.FBC_FBCODE
+		order by to_number(REGEXP_REPLACE(FB_CODE, '[^0-9]')) <![CDATA[desc]]>	
+	</select>
+	
+	<select id="recipeView" resultType="com.ram.goreureuk.recipe.RecipeVO">
+		select
+			RC_CODE,
+			RC_MMID,
+			RC_DATE,
+			RC_TITLE,
+			RC_LIKES,
+			RC_VIEWCNT,
+			RC_INFORMATION
+		from recipe 
+	</select>
+	
+	<select id="tipView" resultType="com.ram.goreureuk.tip.TipBoardVO">
+		select			 
+			a.t_code,
+			a.t_mmid, 
+			a.t_title, 
+			a.t_date, 
+			a.t_likes,
+			a.t_view,
+			b.tc_content
+		from tip a
+		inner join tipcontent b
+		on a.t_code = b.tc_tcode
+	</select>
+	
+	<select id="qnaView" resultType="com.ram.goreureuk.qna.QnaBoardVO">
+		select  
+			qna_title, 
+			qna_content, 
+			qna_date, 
+			qna_mmid, 
+			qna_code
+		from qna 
+	</select>
+
+	</mapper>

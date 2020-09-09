@@ -1,0 +1,75 @@
+@charset "UTF-8";
+
+@font-face { font-family: 'CookieRunOTF-Bold'; 
+src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/CookieRunOTF-Bold00.woff') format('woff'); 
+font-weight: normal; font-style: normal; }
+
+.gallery-title
+{
+    font-size: 36px;
+    color: f44a4a;
+    text-align: center;
+    font-weight: 500;
+    font-family:'CookieRunOTF-Bold';
+    margin-bottom: 70px;
+}
+.gallery-title:after {
+    content: "";
+    position: absolute;
+    width: 7.5%;
+    left: 46.5%;
+    height: 45px;
+    border-bottom: 1px solid #5e5e5e;
+}
+.filter-button
+{
+    font-size: 18px;
+    border: 1px solid f44a4a;
+    border-radius: 5px;
+    text-align: center;
+    color: f44a4a;
+    margin-bottom: 30px;
+}
+.filter-button:hover
+{
+    font-size: 18px;
+    border: 1px solid #f44a4a;
+    border-radius: 5px;
+    text-align: center;
+    color: #ffffff;
+    background-color: f44a4a;
+
+}
+.btn-default:active .filter-button:active
+{
+    background-color: f44a4a;
+    color: white;
+}
+
+.port-image
+{
+    width: 100%;
+}
+
+.gallery_product
+{
+    margin-bottom: 30px;
+}
+
+#recipeMain{
+	padding-bottom: 10px;	
+}
+
+.recipeMainImg{
+	text-align: center;
+}
+
+.recipeTitle{
+	font-size: 35px;
+	margin: 20px;
+}
+
+.recipeInforamtion{
+	font-size: 20px;
+	margin: 20px;
+}

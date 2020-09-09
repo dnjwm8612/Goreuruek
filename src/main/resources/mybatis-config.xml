@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+ <configuration>
+<typeAliases>
+         <typeAlias alias="TipBoardVO" type="com.ram.goreureuk.tip.TipBoardVO" />
+         <typeAlias alias="TipBoardContentVO" type="com.ram.goreureuk.tipContent.TipBoardContentVO" />
+         <typeAlias alias="TipBoardReplyVO" type="com.ram.goreureuk.tipReply.TipBoardReplyVO" />
+         <typeAlias alias="TipBoardLikeVO" type="com.ram.goreureuk.tipLike.TipBoardLikeVO" />
+    </typeAliases>   
+ </configuration>

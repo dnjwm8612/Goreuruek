@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ram.goreureuk.mappers.freeBoardMapper">
+	<insert id="freeInsert" parameterType="com.ram.goreureuk.freeboard.FreeBoardVO">
+		<selectKey keyProperty="FB_CODE" resultType="String"
+			order="BEFORE">
+			<![CDATA[select 'FB'||lpad(FB_CODE.nextval,3,0) from dual]]>
+		</selectKey>
+        <![CDATA[
+           INSERT ALL INTO freeboard
+            (	
+            	bno,
+	            FB_CODE,
+	            FB_MMCODE,
+	            FB_MMID,
+	            FB_DATE,
+	            FB_LIKES
+            )
+            VALUES 
+            (	
+            	bno.NEXTVAL,
+	            #{FB_CODE},
+	            MM_CODE,
+	            MM_ID,
+	            sysdate,
+	            0
+            )
+         	INTO freeboardcontent
+         	(	
+         		bno,
+	         	FBC_FBCODE,
+	         	FBC_FBMMCODE,
+	         	FBC_FBMMID,
+	         	FBC_CONTENT,
+	         	FBC_CONTENT2,
+	         	FBC_TAG
+         	)
+         	VALUES (
+         		bno.CURRVAL,
+	         	#{FB_CODE},
+	         	MM_CODE,
+	         	MM_ID,
+	         	#{FBC_CONTENT},
+	         	#{FBC_CONTENT2},
+	         	#{FBC_TAG}
+         	)
+			SELECT MM_ID,MM_CODE FROM member where MM_ID =#{FB_MMID}
+        ]]>
+	</insert>
+	<delete id="freeDelete" parameterType="String">
+		delete from freeboard
+		where FB_CODE = #{FB_CODE}
+	</delete>
+	<delete id="freeDelete2" parameterType="String">
+		delete from
+		freeboardcontent where FBC_FBCODE = #{FBC_FBCODE}
+	</delete>
+	<delete id="freeBoardLikeDel" parameterType="String">
+		delete from
+		freeboardlikes where FBL_FBCODE = #{FBL_FBCODE}
+	</delete>
+
+	<!-- 조회 -->
+	<select id="freeboardList" resultType="com.ram.goreureuk.freeboard.FreeBoardVO">
+		select
+		g.bno,
+		g.FB_CODE,
+		g.FB_MMID,
+		g.FB_DATE,
+		g.FB_LIKES,
+		c.FBC_FBCODE,
+		c.FBC_CONTENT,
+		c.FBC_CONTENT2,
+		c.FBC_TAG
+		from freeboard g
+		inner join freeboardcontent c
+		on g.FB_CODE =
+		c.FBC_FBCODE
+		where g.FB_MMID = c.FBC_FBMMID and g.bno = c.bno and <![CDATA[ROWNUM >= 1 AND ROWNUM <= 6]]>
+		<include refid="search"></include>
+		order by g.FB_DATE <![CDATA[desc]]>
+	</select>
+
+	<!-- 검색 -->
+	<sql id="search">
+		AND
+		(c.FBC_FBMMID like '%'||#{keyword}||'%'
+		OR c.FBC_CONTENT like '%'||#{keyword}||'%'
+		OR c.FBC_TAG like '%'||#{keyword}||'%')
+	</sql>
+
+	<update id="freeUpdate" parameterType="com.ram.goreureuk.freeboard.FreeBoardVO">
+		update freeboardcontent set FBC_CONTENT = #{FBC_CONTENT}, FBC_TAG =
+		#{FBC_TAG}
+		where FBC_FBCODE = #{FB_CODE}
+	</update>
+	<update id="freeUpdate2" parameterType="com.ram.goreureuk.freeboard.FreeBoardVO">
+		update freeboardcontent set FBC_CONTENT2 = #{FBC_CONTENT2}, FBC_TAG =
+		#{FBC_TAG}
+		where FBC_FBCODE = #{FB_CODE}
+	</update>
+
+	<!-- 좋아요 -->
+	<insert id="createBoardLike" parameterType="com.ram.goreureuk.freeboard.FreeBoardVO">
+		<selectKey keyProperty="FBL_CODE" resultType="String"
+			order="BEFORE">
+			<![CDATA[select 'FL'||lpad(FBL_CODE.nextval,3,0) from dual]]>
+		</selectKey>
+		INSERT INTO freeboardlikes (FBL_CODE,FBL_FBCODE, FBL_FBMMID)
+		VALUES (#{FBL_CODE},#{FBL_FBCODE}, #{FBL_FBMMID})
+	</insert>
+
+	<delete id="deleteBoardLike" parameterType="com.ram.goreureuk.freeboard.FreeBoardVO">
+		DELETE FROM freeboardlikes
+		WHERE FBL_FBCODE = #{FBL_FBCODE} AND FBL_FBMMID = #{FBL_FBMMID}
+	</delete>
+	
+	<!-- hashmap -->
+	<update id="updateBoardLike" parameterType="hashmap">
+		UPDATE freeboard
+		SET
+		FB_LIKES = (SELECT COUNT(*)
+		FROM freeboardlikes
+		WHERE FBL_FBCODE = #{FBL_FBCODE})
+		WHERE FB_CODE = #{FB_CODE}
+	</update>
+
+	<select id="getBoardLike" resultType="int" parameterType="com.ram.goreureuk.freeboard.FreeBoardVO">
+		SELECT COUNT(FBL_CODE) FROM freeboardlikes WHERE FBL_FBCODE = #{FBL_FBCODE}
+		AND FBL_FBMMID = #{FBL_FBMMID}
+	</select>
+	
+	<select id="freeInfiniteDown" resultType="com.ram.goreureuk.freeboard.FreeBoardVO" parameterType="int">
+		<![CDATA[
+		select
+		g.bno,
+		g.FB_CODE,
+		g.FB_MMID,
+		g.FB_DATE,
+		g.FB_LIKES,
+		c.FBC_FBCODE,
+		c.FBC_CONTENT,
+		c.FBC_CONTENT2,
+		c.FBC_TAG
+		from freeboard g
+		inner join freeboardcontent c
+		on g.FB_MMID = c.FBC_FBMMID
+		where g.FB_CODE= c.FBC_FBCODE and g.bno <= #{bno} and ROWNUM <= 5
+		order by g.FB_DATE desc
+		]]>
+	</select>
+	
+	<!-- 태그조회 -->
+	<select id="freeTag" resultType="com.ram.goreureuk.freeboard.FreeBoardVO" parameterType="String">
+		select
+		g.FB_CODE,
+		g.FB_MMID,
+		g.FB_DATE,
+		g.FB_LIKES,
+		c.FBC_FBCODE,
+		c.FBC_CONTENT,
+		c.FBC_CONTENT2,
+		c.FBC_TAG
+		from freeboard g
+		inner join freeboardcontent c
+		on g.FB_CODE = c.FBC_FBCODE
+		where c.FBC_TAG like '%'||#{FBC_TAG}||'%'
+		order by to_number(REGEXP_REPLACE(FB_CODE, '[^0-9]')) <![CDATA[desc]]>
+	</select>
+	
+	<!-- 게시물 유저 신고 -->
+	<insert id="report" parameterType="com.ram.goreureuk.freeboard.BlackList">
+		INSERT INTO blacklist (BL_REASON,BL_MMID,BL_REPORTER)
+		VALUES (#{BL_REASON},#{BL_MMID},#{BL_REPORTER})
+	</insert>
+	
+	<!-- 댓글 -->
+	<insert id="freeReplyInsert" parameterType="com.ram.goreureuk.freeboard.ReplyVO">
+		<selectKey keyProperty="FBR_CODE" resultType="String"
+			order="BEFORE">
+			<![CDATA[select 'FR'||lpad(FBR_CODE.nextval,3,0) from dual]]>
+		</selectKey>
+		INSERT INTO freeboardreply (FBR_CODE,FBR_FBCODE,FBR_FBMMID,FBR_CONTENT)
+		VALUES (#{FBR_CODE},#{FBR_FBCODE},#{FBR_FBMMID},#{FBR_CONTENT})
+	</insert>
+	
+	<!-- 인기순 -->
+	<select id="freeboardListLike" resultType="com.ram.goreureuk.freeboard.FreeBoardVO">
+		select
+		g.FB_CODE,
+		g.FB_MMID,
+		g.FB_DATE,
+		g.FB_LIKES,
+		c.FBC_FBCODE,
+		c.FBC_CONTENT,
+		c.FBC_CONTENT2,
+		c.FBC_TAG
+		from freeboard g
+		inner join freeboardcontent c
+		on g.FB_MMID =
+		c.FBC_FBMMID
+		where g.FB_CODE= c.FBC_FBCODE
+		<include refid="search"></include>
+		order by g.FB_LIKES <![CDATA[desc]]>
+	</select>
+	
+	<!-- 댓글순 -->
+	<select id="freeboardListReply" resultType="com.ram.goreureuk.freeboard.FreeBoardVO">
+		select
+		g.FB_CODE,
+		g.FB_MMID,
+		g.FB_DATE,
+		g.FB_LIKES,
+		c.FBC_FBCODE,
+		c.FBC_CONTENT,
+		c.FBC_CONTENT2,
+		c.FBC_TAG,
+		a.cnt1
+		from freeboard g
+		inner join freeboardcontent c
+		on g.FB_MMID = c.FBC_FBMMID
+		inner join (select FBR_FBCODE,count(FBR_FBCODE) as cnt1 from freeboardreply group by FBR_FBCODE) a on g.FB_CODE =a.FBR_FBCODE
+		where g.FB_CODE= c.FBC_FBCODE
+		<include refid="search"></include>
+		order by a.cnt1 <![CDATA[desc]]>
+	</select>
+	
+	<!-- 댓글 리스트 -->
+	<select id="freeboardReplyList" resultType="com.ram.goreureuk.freeboard.ReplyVO" parameterType="String">
+	<![CDATA[
+	select
+		FBR_FBCODE,
+		FBR_CODE,
+		FBR_FBMMID,
+		FBR_DATE,
+		FBR_CONTENT
+	from freeboardreply
+	where FBR_FBCODE=#{FBR_FBCODE}
+	order by FBR_DATE desc
+	]]>
+	</select>
+	
+	<delete id="freeReplyDelete" parameterType="String">
+		delete from freeboardreply
+		where FBR_CODE = #{FBR_CODE}
+	</delete>
+	
+	
+	<!-- 마이페이지 리스트조회 -->
+	<select id="mypageFreeList" resultType="com.ram.goreureuk.freeboard.FreeBoardVO" parameterType="String">
+		select
+		g.FB_CODE,
+		g.FB_MMID,
+		g.FB_DATE,
+		g.FB_LIKES,
+		c.FBC_FBCODE,
+		c.FBC_CONTENT,
+		c.FBC_CONTENT2,
+		c.FBC_TAG
+		from freeboard g
+		inner join freeboardcontent c
+		on g.FB_MMID =
+		c.FBC_FBMMID
+		where g.FB_CODE= c.FBC_FBCODE and g.FB_MMID = #{MM_ID}
+		order by to_number(REGEXP_REPLACE(FB_CODE, '[^0-9]')) <![CDATA[desc]]>
+	</select>
+	
+	<!-- 마이페이지 댓글 리스트 -->
+	<select id="mypageFreeReply" resultType="com.ram.goreureuk.freeboard.ReplyVO" parameterType="String">
+	<![CDATA[
+	select
+		FBR_FBCODE,
+		FBR_CODE,
+		FBR_FBMMID,
+		FBR_DATE,
+		FBR_CONTENT
+	from freeboardreply
+	where FBR_FBMMID=#{MM_ID}
+	order by FBR_DATE desc
+	]]>
+	</select>
+	
+	<!-- 마이페이지 좋아요 -->
+	<select id="mypageFreeLikes" resultType="com.ram.goreureuk.freeboard.FreeBoardLikes" parameterType="String">
+		SELECT FBL_FBCODE,FBL_FBMMID FROM freeboardlikes WHERE FBL_FBMMID = #{MM_ID}
+	</select>
+	
+	<!-- 마이페이지 좋아요리스트조회 -->
+	<select id="mypageFreeLikesList" resultType="com.ram.goreureuk.freeboard.FreeBoardVO" parameterType="String">
+		select
+		g.FB_CODE,
+		g.FB_MMID,
+		g.FB_DATE,
+		g.FB_LIKES,
+		c.FBC_FBCODE,
+		c.FBC_CONTENT,
+		c.FBC_CONTENT2,
+		c.FBC_TAG
+		from freeboard g
+		inner join freeboardcontent c
+		on g.FB_MMID = c.FBC_FBMMID
+		where g.FB_CODE= #{FBL_FBCODE} 
+		order by to_number(REGEXP_REPLACE(FB_CODE, '[^0-9]')) <![CDATA[desc]]>
+	</select>
+	
+	<!-- 쪽지보내기 -->
+	<insert id="freeMessageInsert" parameterType="com.ram.goreureuk.freeboard.Message">
+		<selectKey keyProperty="MS_CODE" resultType="String" order="BEFORE">
+			<![CDATA[select 'MS'||lpad(MS_CODE.nextval,3,0) from dual]]>
+		</selectKey>
+		INSERT INTO tbl_message 
+			(
+				MS_CODE,
+				TARGET_MMID,
+				SENDER_MMID,
+				MS_CONTENT
+			)
+		VALUES 
+			(
+				#{MS_CODE},
+				#{TARGET_MMID},
+				#{SENDER_MMID},
+				#{MS_CONTENT}				
+			)
+	</insert>
+	
+</mapper>

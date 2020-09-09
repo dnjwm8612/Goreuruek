@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ram.goreureuk.mappers.MessageReplyMapper">
+
+	<!-- 답변 입력 -->
+	<insert id="msrInsert">
+		insert into msr(msr_mscode, msr_code, msr_msmmcode, msr_msmmid, msr_content)
+		values (#{msr_mscode}, 'a'||lpad(MESSAGE_REPLY_SEQUENCE.nextval,4,0), #{msr_msmmcode}, #{msr_msmmid}, #{msr_content})
+	</insert>
+	
+	<!-- 답변 목록 -->
+	<select id="msrlist" resultType="com.ram.goreureuk.messagereply.MessageReplyVO" parameterType="java.lang.String">
+		select msr_mscode, msr_code, msr_content, msr_msmmcode, msr_msmmid, msr_date
+		from msr
+		where msr_mscode=#{msr_mscode}
+		order by msr_code
+	</select>
+</mapper>

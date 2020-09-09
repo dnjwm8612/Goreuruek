@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ram.goreureuk.mappers.RecipeMapper">
+	
+	<select id="bd_selecdt" resultType="String">
+		SELECT BD_CODE AS rc_bdcode FROM BD WHERE BD_NAME = 'RECIPE'
+	</select>
+	
+	<select id="rc_mmcode_select" parameterType="String" resultType="String">
+		SELECT M.MM_CODE AS rc_mmcode FROM MEMBER M, RECIPE R WHERE M.MM_CODE = R.RC_MMCODE AND R.RC_MMID = #{rc_mmid}
+	</select>
+	
+	<insert id="rc_insert"	parameterType="com.ram.goreureuk.recipe.RecipeVO">
+		<selectKey keyProperty="RC_CODE" resultType="String" order="BEFORE">
+		<![CDATA[
+			SELECT 'R'||lpad(RC_CODE.nextval,4,0) FROM DUAL
+		]]>
+		</selectKey>
+		INSERT INTO recipe
+		(
+			RC_CODE, 
+			RC_MMCODE, 
+			RC_MMID, 
+			RC_TITLE,
+			RC_INGREDIENT, 
+			RC_INFORMATION, 
+			RC_KINDS, 
+			RC_SITUATION, 
+			RC_MATERIAL,
+			RC_WAYS
+		)
+		VALUES 
+		(
+			#{RC_CODE} , 
+			(select MM_CODE from member where MM_ID = #{RC_MMID}), 
+			#{RC_MMID}, 
+			#{RC_TITLE},
+			#{RC_INGREDIENT},
+			#{RC_INFORMATION}, 
+			#{RC_KINDS}, 
+			#{RC_SITUATION},
+			#{RC_MATERIAL}, 
+			#{RC_WAYS}
+		)
+	</insert>
+	
+	<insert id="rcc_insert" parameterType="com.ram.goreureuk.recipe.RecipeVO">
+		<selectKey keyProperty="RCC_CODE" resultType="String" order="BEFORE">
+		<![CDATA[
+			SELECT 'C'||lpad(RCC_CODE.nextval,4,0) FROM DUAL
+		]]>
+		</selectKey>
+			INSERT INTO recipecontent
+			(
+				RCC_RCCODE,
+				RCC_CODE, 
+				RCC_RCMMCODE, 
+				RCC_RCMMID, 
+				RCC_SOURCE, 
+				RCC_STEPINFO, 
+				RCC_STEP
+			) 
+			VALUES 
+			(
+				#{RC_CODE},
+				#{RCC_CODE},
+				(select MM_CODE from member where MM_ID = #{RC_MMID}),
+				#{RC_MMID},
+				#{RCC_SOURCE},
+				#{RCC_STEPINFO},
+				#{RCC_STEP}
+			)
+	</insert>
+
+	<update id="rc_update" parameterType="com.ram.goreureuk.recipe.RecipeVO">
+		UPDATE RC SET RC_TITLE=#{rc_title}, RC_INGREDIENT = {rc_ingredient}, RC_INFORMATION = #{rc_information}, RC_KINDS=#{rc_kinds}, 
+		RC_SITUATION=#{rc_situation}, RC_MATERIAL= #{rc_material}, RC_WAYS =#{rc_ways} WHERE RC_CODE= #{rc_code}		
+	</update>
+	
+	<update id="rcc_update" parameterType="com.ram.goreureuk.recipe.RecipeContentVO">
+		UPDATE RCC SET RCC_SOURCE = #{rcc_source}, RCC_STEPINFO = #{rcc_stepinfo}, RCC_STEP=#{rcc_step} WHERE RCC_CODE =#{rcc_code}
+	</update>
+	
+	<delete id="rcc_rcdelete" parameterType="String">
+		DELETE FROM RCC WHERE RCC_RCCODE = #{rcc_code}
+	</delete>
+	
+	<delete id="rc_delete" parameterType="String">
+		DELETE FROM RC WHERE RC_CODE = #{rc_code}
+	</delete>
+	
+	<delete id="rcc_delete" parameterType="String">
+		DELETE FROM RCC WHERE RCC_RCCODE = #{rcc_rccode}
+	</delete>
+	
+	<select id="recipeList" resultType="com.ram.goreureuk.recipe.RecipeVO" parameterType="com.ram.goreureuk.recipe.RecipeSearch">
+		<include refid="pagingHeader"></include>
+		select
+		rownum,
+		a.RC_CODE,
+		a.RC_MMCODE,
+		a.RC_MMID,
+		a.RC_DATE,
+		a.RC_LIKES,
+		a.RC_TITLE,
+		a.RC_INGREDIENT,
+		a.RC_INFORMATION,
+		a.RC_KINDS,
+		a.RC_SITUATION,
+		a.RC_MATERIAL,
+		a.RC_WAYS,
+		a.RC_VIEWCNT,
+		b.RCC_CODE,
+		b.RCC_SOURCE,
+		b.RCC_STEPINFO,
+		b.RCC_STEP
+		from recipe a
+		inner join recipecontent b
+		on a.RC_CODE = b.RCC_RCCODE
+		where a.RC_CODE= b.RCC_RCCODE and b.RCC_STEP = 'STEP 1'
+		<include refid="search2"></include>
+		<include refid="search"></include>
+		order by to_number(REGEXP_REPLACE(RC_CODE, '[^0-9]')) <![CDATA[desc]]>
+		<include refid="pagingFooter"></include> 
+	</select>
+	<!-- 검색 -->
+	<sql id="search2">
+		AND
+		(a.RC_MMID like '%'||#{rs.keyword}||'%'
+		OR a.RC_TITLE like '%'||#{rs.keyword}||'%'
+		OR a.RC_INFORMATION like '%'||#{rs.keyword}||'%'
+		OR a.RC_INGREDIENT like '%'||#{rs.keyword}||'%')
+	</sql>
+	<sql id="search">
+		AND
+		(a.RC_KINDS LIKE '%'||#{rs.RC_KINDS}||'%' OR
+		a.RC_SITUATION LIKE '%'||#{rs.RC_SITUATION}||'%' OR
+		a.RC_MATERIAL LIKE '%'||#{rs.RC_MATERIAL}||'%' OR
+		a.RC_WAYS LIKE '%'||#{rs.RC_WAYS}||'%')
+	</sql>
+	
+	<update id="viewCnt" parameterType="String">
+		update recipe set RC_VIEWCNT = RC_VIEWCNT+1
+  		where RC_CODE = #{RC_CODE}
+  	</update>
+  	
+  	<select id="countList" parameterType="com.ram.goreureuk.recipe.RecipeSearch" resultType="int">
+  		SELECT COUNT(*) FROM recipe where
+  		RC_MMID like '%'||#{keyword}||'%'
+		OR RC_TITLE like '%'||#{keyword}||'%'
+		OR RC_INFORMATION like '%'||#{keyword}||'%'
+		OR RC_INGREDIENT like '%'||#{keyword}||'%'
+		AND
+		(RC_KINDS LIKE '%'||#{RC_KINDS}||'%' OR
+		RC_SITUATION LIKE '%'||#{RC_SITUATION}||'%' OR
+		RC_MATERIAL LIKE '%'||#{RC_MATERIAL}||'%' OR
+		RC_WAYS LIKE '%'||#{RC_WAYS}||'%')
+  	</select>
+  	
+  	<!-- 인기순 조회 -->
+  	<select id="recipeLikesList" resultType="com.ram.goreureuk.recipe.RecipeVO" parameterType="com.ram.goreureuk.recipe.RecipeSearch">
+		<include refid="pagingHeader"></include>
+		select
+		rownum,
+		a.RC_CODE,
+		a.RC_MMCODE,
+		a.RC_MMID,
+		a.RC_DATE,
+		a.RC_LIKES,
+		a.RC_TITLE,
+		a.RC_INGREDIENT,
+		a.RC_INFORMATION,
+		a.RC_KINDS,
+		a.RC_SITUATION,
+		a.RC_MATERIAL,
+		a.RC_WAYS,
+		a.RC_VIEWCNT,
+		b.RCC_CODE,
+		b.RCC_SOURCE,
+		b.RCC_STEPINFO,
+		b.RCC_STEP
+		from recipe a
+		inner join recipecontent b
+		on a.RC_CODE = b.RCC_RCCODE
+		where a.RC_CODE= b.RCC_RCCODE and b.RCC_STEP = 'STEP 1'
+		<include refid="search2"></include>
+		<include refid="search"></include>
+		order by a.RC_LIKES <![CDATA[desc]]>
+		<include refid="pagingFooter"></include> 
+	</select>
+	
+	<!-- 조회수순 조회 -->
+	<select id="recipeViewList" resultType="com.ram.goreureuk.recipe.RecipeVO" parameterType="com.ram.goreureuk.recipe.RecipeSearch">
+		<include refid="pagingHeader"></include>
+		select
+		rownum,
+		a.RC_CODE,
+		a.RC_MMCODE,
+		a.RC_MMID,
+		a.RC_DATE,
+		a.RC_LIKES,
+		a.RC_TITLE,
+		a.RC_INGREDIENT,
+		a.RC_INFORMATION,
+		a.RC_KINDS,
+		a.RC_SITUATION,
+		a.RC_MATERIAL,
+		a.RC_WAYS,
+		a.RC_VIEWCNT,
+		b.RCC_CODE,
+		b.RCC_SOURCE,
+		b.RCC_STEPINFO,
+		b.RCC_STEP
+		from recipe a
+		inner join recipecontent b
+		on a.RC_CODE = b.RCC_RCCODE
+		where a.RC_CODE= b.RCC_RCCODE and b.RCC_STEP = 'STEP 1'
+		<include refid="search2"></include>
+		<include refid="search"></include>
+		order by a.RC_VIEWCNT <![CDATA[desc]]>
+		<include refid="pagingFooter"></include> 
+	</select>
+	
+	<!-- 댓글순 조회 -->
+	<select id="recipeReplyListSort" resultType="com.ram.goreureuk.recipe.RecipeVO" parameterType="com.ram.goreureuk.recipe.RecipeSearch">
+		<include refid="pagingHeader"></include>
+		select
+		rownum,
+		a.RC_CODE,
+		a.RC_MMCODE,
+		a.RC_MMID,
+		a.RC_DATE,
+		a.RC_LIKES,
+		a.RC_TITLE,
+		a.RC_INGREDIENT,
+		a.RC_INFORMATION,
+		a.RC_KINDS,
+		a.RC_SITUATION,
+		a.RC_MATERIAL,
+		a.RC_WAYS,
+		a.RC_VIEWCNT,
+		b.RCC_CODE,
+		b.RCC_SOURCE,
+		b.RCC_STEPINFO,
+		b.RCC_STEP,
+		c.cnt1
+		from recipe a
+		inner join recipecontent b
+		on a.RC_CODE = b.RCC_RCCODE
+		inner join (select RCR_RCCODE,count(RCR_RCCODE) as cnt1 from recipereply group by RCR_RCCODE) c
+		on a.RC_CODE = c.RCR_RCCODE
+		where a.RC_CODE= b.RCC_RCCODE and b.RCC_STEP = 'STEP 1'
+		<include refid="search2"></include>
+		<include refid="search"></include>
+		order by c.cnt1 <![CDATA[desc]]>
+		<include refid="pagingFooter"></include> 
+	</select>
+	
+	
+	<!-- 레시피  상세보기 -->
+	<select id="recipeView" parameterType="String" resultType="com.ram.goreureuk.recipe.RecipeVO">
+		select
+		a.RC_CODE,
+		a.RC_MMCODE,
+		a.RC_MMID,
+		a.RC_DATE,
+		a.RC_LIKES,
+		a.RC_TITLE,
+		a.RC_INGREDIENT,
+		a.RC_INFORMATION,
+		a.RC_KINDS,
+		a.RC_SITUATION,
+		a.RC_MATERIAL,
+		a.RC_WAYS,
+		a.RC_VIEWCNT,
+		b.RCC_CODE,
+		b.RCC_SOURCE,
+		b.RCC_STEPINFO,
+		b.RCC_STEP
+		from recipe a
+		inner join recipecontent b
+		on a.RC_CODE = b.RCC_RCCODE
+		where a.RC_CODE= #{RC_CODE}
+	</select>
+	
+	<!-- 좋아요 -->
+	<insert id="createBoardLike" parameterType="com.ram.goreureuk.recipe.RecipeVO">
+		<selectKey keyProperty="RCL_CODE" resultType="String"
+			order="BEFORE">
+			<![CDATA[select 'RL'||lpad(RCL_CODE.nextval,3,0) from dual]]>
+		</selectKey>
+		INSERT INTO recipelikes (RCL_CODE,RCL_RCCODE, RCL_RCMMID)
+		VALUES (#{RCL_CODE},#{RCL_RCCODE}, #{RCL_RCMMID})
+	</insert>
+
+	<delete id="deleteBoardLike" parameterType="com.ram.goreureuk.recipe.RecipeVO">
+		DELETE FROM recipelikes
+		WHERE RCL_RCCODE = #{RCL_RCCODE} AND RCL_RCMMID = #{RCL_RCMMID}
+	</delete>
+	
+	<!-- hashmap -->
+	<update id="updateBoardLike" parameterType="hashmap">
+		UPDATE recipe
+		SET
+		RC_LIKES = (SELECT COUNT(*)
+		FROM recipelikes
+		WHERE RCL_RCCODE = #{RCL_RCCODE})
+		WHERE RC_CODE = #{RC_CODE}
+	</update>
+
+	<select id="getBoardLike" resultType="int" parameterType="com.ram.goreureuk.recipe.RecipeVO">
+		SELECT COUNT(RCL_CODE) FROM recipelikes WHERE RCL_RCCODE = #{RCL_RCCODE}
+		AND RCL_RCMMID = #{RCL_RCMMID}
+	</select>
+
+	<delete id="recipeLikeDel" parameterType="String">
+		delete from
+		recipelikes where RCL_RCCODE = #{RCL_RCCODE}
+	</delete>
+	
+	<!-- 댓글 -->
+	<insert id="recipeReply" parameterType="com.ram.goreureuk.recipe.ReplyVO">
+		<selectKey keyProperty="RCR_CODE" resultType="String"
+			order="BEFORE">
+			<![CDATA[select 'RR'||lpad(RCR_CODE.nextval,3,0) from dual]]>
+		</selectKey>
+		INSERT INTO recipereply (RCR_CODE,RCR_RCCODE,RCR_RCMMID,RCR_CONTENT)
+		VALUES (#{RCR_CODE},#{RCR_RCCODE},#{RCR_RCMMID},#{RCR_CONTENT})
+	</insert>
+	
+	<!-- 댓글 리스트 -->
+	<select id="recipeReplyList" resultType="com.ram.goreureuk.recipe.ReplyVO" parameterType="String">
+	<![CDATA[
+	select
+		RCR_RCCODE,
+		RCR_CODE,
+		RCR_RCMMID,
+		RCR_DATE,
+		RCR_CONTENT
+	from recipereply
+	where RCR_RCCODE=#{RCR_RCCODE}
+	order by RCR_DATE desc
+	]]>
+	</select>
+	
+	<delete id="recipeReplyDelete" parameterType="String">
+		delete from recipereply
+		where RCR_CODE = #{RCR_CODE}
+	</delete>
+	
+	<!-- 레시피 업데이트 뷰 -->
+	<select id="recipeView2" resultType="com.ram.goreureuk.recipe.RecipeVO" parameterType="String">
+		select
+		a.RC_CODE,
+		a.RC_MMCODE,
+		a.RC_MMID,
+		a.RC_DATE,
+		a.RC_LIKES,
+		a.RC_TITLE,
+		a.RC_INGREDIENT,
+		a.RC_INFORMATION,
+		a.RC_KINDS,
+		a.RC_SITUATION,
+		a.RC_MATERIAL,
+		a.RC_WAYS,
+		a.RC_VIEWCNT,
+		b.RCC_CODE,
+		b.RCC_SOURCE,
+		b.RCC_STEPINFO,
+		b.RCC_STEP
+		from recipe a
+		inner join recipecontent b
+		on a.RC_CODE = b.RCC_RCCODE
+		where a.RC_CODE= #{RC_CODE}
+	</select>
+	
+	<update id="recipeupdateRC" parameterType="com.ram.goreureuk.recipe.RecipeVO">
+		UPDATE recipe SET RC_TITLE=#{RC_TITLE}, RC_INGREDIENT = #{RC_INGREDIENT}, RC_INFORMATION = #{RC_INFORMATION}, RC_KINDS=#{RC_KINDS}, 
+		RC_SITUATION=#{RC_SITUATION}, RC_MATERIAL= #{RC_MATERIAL}, RC_WAYS =#{RC_WAYS} WHERE RC_CODE= #{RC_CODE}		
+	</update>
+	
+	<update id="recipeupdateRCC" parameterType="com.ram.goreureuk.recipe.RecipeVO">
+		UPDATE recipecontent SET RCC_SOURCE = #{RCC_SOURCE}, RCC_STEPINFO = #{RCC_STEPINFO}, RCC_STEP=#{RCC_STEP} WHERE RCC_CODE =#{RCC_CODE}
+	</update>
+	
+	<delete id="recipedel" parameterType="String">
+		delete from recipe
+		where RC_CODE = #{RC_CODE}
+	</delete>
+	
+	<!-- 마이페이지 레시피 조회 -->
+	<select id="mypageRecipeList" parameterType="String" resultType="com.ram.goreureuk.recipe.RecipeVO">
+		select
+		RC_CODE,
+		RC_MMID,
+		RC_DATE,
+		RC_TITLE
+		from recipe 
+		where RC_MMID= #{MM_ID}
+	</select>
+	
+	<!-- 마이페이지 댓글 리스트 -->
+	<select id="mypageRecipeReply" resultType="com.ram.goreureuk.recipe.ReplyVO" parameterType="String">
+	<![CDATA[
+	select
+		RCR_RCCODE,
+		RCR_CODE,
+		RCR_RCMMID,
+		RCR_DATE,
+		RCR_CONTENT
+	from recipereply
+	where RCR_RCMMID=#{MM_ID}
+	order by RCR_DATE desc
+	]]>
+	</select>
+	
+	<!-- 마이페이지 좋아요 -->
+	<select id="mypageRecipeLikes" resultType="com.ram.goreureuk.recipe.RecipeVO" parameterType="String">
+		SELECT RCL_RCCODE,RCL_RCMMID FROM recipelikes WHERE RCL_RCMMID = #{MM_ID}
+	</select>
+	
+	<!-- 마이페이지 좋아요 리스트 -->
+	<select id="mypageRecipeLikesList" parameterType="String" resultType="com.ram.goreureuk.recipe.RecipeVO">
+		select
+		RC_CODE,
+		RC_MMID,
+		RC_DATE,
+		RC_LIKES,
+		RC_TITLE
+		from recipe
+		where RC_CODE= #{RCL_RCCODE}
+	</select>
+	
+	
+	<!-- 페이징 sql -->
+	<sql id="pagingHeader">
+	    SELECT * FROM (
+	        SELECT ROWNUM AS rn, A.* FROM (
+	</sql>
+	<sql id="pagingFooter">
+	        ) A
+	    ) WHERE rn BETWEEN #{start} AND #{end}
+	</sql>
+	
+</mapper>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ram.goreureuk.mappers.tipBoardLikesMapper">
+
+
+<insert id="insertBoardLike" parameterType="TipBoardLikeVO">
+<selectKey keyProperty="tl_tmmcode" resultType="String" order="BEFORE" >
+		SELECT MM_CODE AS tl_tmmcode FROM MEMBER MM WHERE MM_ID = #{tl_tmmid}
+</selectKey>
+        INSERT INTO tl(
+           tl_tcode,
+           tl_tmmcode,
+           tl_tmmid,
+           tl_code )
+        VALUES(
+           #{tl_tcode},
+           #{tl_tmmcode},
+           #{tl_tmmid},
+           TIP_LIKES_SEQUENCE.nextval )
+</insert>
+
+<delete id="deleteBoardLike" parameterType="TipBoardLikeVO">
+            DELETE FROM tl
+            WHERE tl_tcode = #{tl_tcode} AND tl_tmmid = #{tl_tmmid}
+</delete>
+
+<select id="updateBoardLike" parameterType="String">
+            UPDATE t
+            SET
+            t_likes = ( SELECT COUNT(*) FROM tl WHERE tl_tcode = #{t_code} )
+            WHERE t_code = #{t_code}
+</select>
+
+<select id="getBoardLike" resultType="int">
+            SELECT COUNT(tl_code) FROM tl WHERE tl_tcode = #{tl_tcode} AND tl_tmmid = #{tl_tmmid}
+</select>
+
+</mapper>

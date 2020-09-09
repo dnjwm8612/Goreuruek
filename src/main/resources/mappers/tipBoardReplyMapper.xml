@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ram.goreureuk.mappers.tipBoardReplyMapper">
+
+<!-- 댓글 입력 -->
+<insert id="insertReply" parameterType="TipBoardReplyVO">
+	<selectKey keyProperty="tr_tmmcode" resultType="String" order="BEFORE" >
+		SELECT MM_CODE AS tr_tmmcode FROM MEMBER MM WHERE MM_ID = #{tr_tmmid}
+	</selectKey>
+INSERT INTO TR(
+	TR_TCODE,
+	TR_CODE,
+	TR_TMMCODE,
+	TR_TMMID,
+	TR_CONTENT )
+VALUES (
+	#{tr_tcode},  
+	'r'||lpad(TIP_REPLY_sequence.nextval,4,0),
+	#{tr_tmmcode},
+	#{tr_tmmid},
+	#{tr_content} )
+</insert>
+
+<select id="selectReply" resultType="TipBoardReplyVO">
+SELECT
+	TR_TCODE,
+	TR_CODE,
+	TR_TMMCODE,
+	TR_TMMID,
+	TR_CONTENT
+FROM
+	TR, MM
+WHERE
+	TR.TR_TMMID = MM.MM_ID AND TR_TCODE = #{tr_tcode}
+ORDER BY TR_CODE
+</select>
+
+<!-- 댓글 삭제 -->
+<delete id="deleteReply" parameterType="String">
+DELETE FROM TR WHERE TR_CODE = #{tr_code}
+</delete>
+
+<!-- 해당 게시글 댓글 전체삭제 -->
+<delete id="deleteAllReply" parameterType="String">
+DELETE FROM TR WHERE TR_TCODE = #{t_code}
+</delete>
+
+<!-- 댓글 갯수 -->
+<select id="replyCnt" resultType="int" parameterType="String">
+SELECT COUNT(*) AS REPLYCNT FROM TR WHERE TR_TCODE = #{tr_tcode}
+</select>
+
+</mapper>

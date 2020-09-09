@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ram.goreureuk.mappers.tipBoardMapper">
+
+
+<!-- 게시글 목록 -->
+<select id="getTipBoardList" resultType="TipBoardVO">
+SELECT * 
+		FROM (
+			SELECT ROWNUM RN, A.* 
+			
+				FROM (
+						SELECT t_bdcode, t_code, t_mmcode, t_mmid, t_title, t_date, t_likes, t_view, (select count(*) from tr where tr_tcode = t_code) as t_cnt 
+						FROM TIP
+						ORDER BY T_CODE
+						) A
+				) 
+	WHERE RN BETWEEN #{startList} AND #{listSize}
+</select>
+
+<!-- 전체 게시글 수 -->
+<select id="getTipBoardListCnt" resultType="int">
+SELECT COUNT(*) FROM TIP
+</select>
+
+<!-- 게시글 상세보기 1 -->
+<select id="getSelectContent1" resultType="TipBoardVO" parameterType="TipBoardVO">
+select t_bdcode, t_code, t_mmcode, t_mmid, t_title, t_date, t_likes
+from t
+where t_code = #{t_code}
+</select>
+
+<!-- 게시글 상세보기 2 -->
+<select id="getSelectContent2" resultType="TipBoardContentVO" parameterType="TipBoardContentVO">
+select tc_tcode, tc_tmmcode, tc_tmmid, tc_content, tc_image
+from tc
+where tc_tcode = #{t_code}
+</select>
+
+
+<!-- 게시판 코드 가져오기 -->
+<select id="bd_select" resultType="String">
+SELECT BD_CODE AS T_BDCODE FROM BD WHERE BD_NAME = 'tip'	
+</select>
+
+<!-- 게시글 입력 -->
+<insert id="insertTipBoard" parameterType="TipBoardVO">
+	<selectKey keyProperty="t_mmcode" resultType="String" order="BEFORE" >
+		SELECT MM_CODE AS t_mmcode FROM MEMBER MM WHERE MM_ID = #{t_mmid}
+	</selectKey>
+INSERT INTO TIP (
+	t_bdcode,
+	t_code,
+	t_mmcode,
+	t_mmid,
+	t_title
+     )
+VALUES (
+	#{t_bdcode},
+	't'||lpad(TIP_sequence.nextval,4,0),
+	#{t_mmcode},
+	#{t_mmid},
+	#{t_title}
+     )
+</insert>
+
+<!-- 게시글 입력 -->
+<insert id="insertTipBoard2" parameterType="TipBoardContentVO">
+	<selectKey keyProperty="tc_tmmcode" resultType="String" order="BEFORE">
+		SELECT MM_CODE AS tc_tmmcode FROM MM WHERE MM_ID = #{tc_tmmid}
+	</selectKey>
+INSERT INTO TIPCONTENT (
+	TC_TCODE,
+	TC_TMMCODE,
+	TC_TMMID,
+	TC_CONTENT
+	
+     )
+VALUES (
+	#{tc_tcode},
+	#{tc_tmmcode},
+	#{tc_tmmid},
+	#{tc_content}
+	
+     )
+</insert>
+
+<!-- 게시글 코드 가져오기 -->
+<select id="selectT_code" resultType="String" parameterType="String">
+	SELECT MAX(T_CODE) AS t_tcode from T where T_MMID = #{t_mmid} 
+</select>
+
+<!-- 게시글 수정1 -->
+<update id="updateTipBoard" parameterType="TipBoardVO" >	
+
+UPDATE T SET
+	T_TITLE = #{t_title}
+WHERE
+	T_CODE = #{t_code}
+</update>
+
+<!-- 게시글 수정2 -->
+<update id="updateTipBoard2" parameterType="TipBoardContentVO">	
+
+UPDATE TC SET
+	TC_CONTENT = #{tc_content}
+where
+	TC_TCODE = #{tc_tcode}
+</update>
+
+<delete id="deleteTipBoard" parameterType="TipBoardVO">
+DELETE FROM T
+WHERE T_CODE = #{t_code}
+</delete>
+
+<delete id="deleteTipBoard2" parameterType="TipBoardVO">
+DELETE FROM TC
+WHERE TC_TCODE = #{t_code}
+</delete> 
+
+<!-- 조회수 -->
+<update id="updateView" parameterType="TipBoardVO">
+UPDATE T SET
+	T_VIEW = T_VIEW + 1
+WHERE
+	T_CODE = #{t_code}
+</update>
+
+
+
+
+</mapper>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ram.goreureuk.mappers.QnaBoardMapper">
+
+	<select id="qnalist" resultType="com.ram.goreureuk.qna.QnaBoardVO">
+		<include refid="pagingHeader"></include>
+			select qna_code, qna_title, qna_content, qna_mmid, qna_date
+			from
+			qna 
+			<!-- <include refid="search"></include> -->
+			order by
+			qna_code desc
+		<include refid="pagingFooter"></include>
+	</select>
+
+	<!-- 검색 sql -->
+	<sql id="search">
+		<choose>
+			<when test="searchOption == 'all'">
+				where q.qna_mmid = m.mm_id  
+				and 
+				(qna_mmid like '%'||#{keyword}||'%'
+				or qna_content like '%'||#{keyword}||'%'
+				or qna_title like '%'||#{keyword}||'%')
+			</when>
+			<otherwise>
+				where q.qna_mmid = m.mm_id
+				and ${searchOption} like '%'||#{keyword}||'%'
+			</otherwise>
+		</choose>
+	</sql>
+	<!-- 페이징 sql -->
+	<sql id="pagingHeader">
+		select * from (
+			select rownum as rn, A.* from(
+	</sql>
+	<sql id="pagingFooter">
+			) A
+		)where rn between #{start} and #{end}
+	</sql>
+	
+	
+	<insert id="qna_insert">
+		insert into qna 
+		(qna_bdcode, qna_code, qna_title, qna_content, qna_mmid, qna_mmcode)
+		values ('b0005', 'q'||lpad(QNA_sequence.nextval,4,0), #{qna_title}, #{qna_content}, #{qna_mmid}, #{qna_mmcode})
+	</insert>
+	
+	<select id="qna_view" parameterType="String" resultType="com.ram.goreureuk.qna.QnaBoardVO">
+		select 
+		qna_bdcode, qna_mmcode, qna_title, qna_content, qna_date, qna_mmid, qna_code
+		from 
+		qna 
+		where 
+		qna_code = #{qna_code}
+	</select>
+	
+	
+	<update id="qna_updateArticle">
+		update qna set
+		qna_title = #{qna_title},
+		qna_content = #{qna_content},
+		qna_mmid = #{qna_mmid}
+		where qna_code = #{qna_code}
+	</update>
+	
+	<delete id="qna_deleteArticle">
+		delete from qna
+		where qna_code = #{qna_code}
+	</delete>
+	
+	<select id="qna_countArticle" resultType="int">
+		select count(*) from qna
+		<!-- <include refid="search"></include> -->
+	</select>
+	
+	<select id="auth" resultType="String" parameterType="String">
+		select MM_AUTH from member where MM_ID = #{MM_ID}
+	</select>
+	
+	
+</mapper>
