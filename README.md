@@ -9,7 +9,7 @@
 ### Server
 backend technologies used in this project:
 - SpringFramework
- * OracleDB
+ * OracleDatabase
  + MyBatis
  
 ### Client
